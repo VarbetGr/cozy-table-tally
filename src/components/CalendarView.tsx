@@ -40,7 +40,12 @@ const CalendarView = () => {
   };
 
   const getReservationsForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0];
+    // Format the date as YYYY-MM-DD to match the reservation date format
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    
     return reservations.filter(reservation => reservation.date === dateString);
   };
 
