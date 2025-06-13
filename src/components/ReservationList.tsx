@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useReservations } from "@/context/ReservationContext";
+import { useReservations, Reservation } from "@/context/ReservationContext";
 import { useToast } from "@/hooks/use-toast";
+import ReservationForm from "./ReservationForm";
 
 const ReservationList = () => {
   const { reservations, deleteReservation } = useReservations();
@@ -15,6 +16,7 @@ const ReservationList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
+  const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
 
   const filteredReservations = reservations.filter(reservation => {
     const matchesSearch = reservation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,6 +43,14 @@ const ReservationList = () => {
         description: `Reservation for ${customerName} has been removed.`,
       });
     }
+  };
+
+  const handleEdit = (reservation: Reservation) => {
+    setEditingReservation(reservation);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingReservation(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -136,7 +146,6 @@ const ReservationList = () => {
                       </Badge>
                     </div>
                     
-                    {/* Contact Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                       {reservation.customerPhone && (
                         <div className="flex items-center">
@@ -152,7 +161,6 @@ const ReservationList = () => {
                       )}
                     </div>
                     
-                    {/* Reservation Details */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div className="flex items-center text-gray-600">
                         <Users className="h-4 w-4 mr-2 text-orange-500" />
@@ -174,7 +182,6 @@ const ReservationList = () => {
                       )}
                     </div>
                     
-                    {/* Notes */}
                     {reservation.notes && (
                       <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
                         <strong>Notes:</strong> {reservation.notes}
@@ -184,6 +191,14 @@ const ReservationList = () => {
                   
                   {/* Actions */}
                   <div className="flex space-x-2 ml-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(reservation)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -199,6 +214,15 @@ const ReservationList = () => {
           ))
         )}
       </div>
+
+      {/* Edit Reservation Modal */}
+      {editingReservation && (
+        <ReservationForm
+          editingReservation={editingReservation}
+          onClose={handleCloseEdit}
+          onSuccess={handleCloseEdit}
+        />
+      )}
     </div>
   );
 };

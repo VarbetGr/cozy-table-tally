@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Save, User, Phone, Mail, Users, Calendar, Clock, Hash, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,16 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useReservations } from "@/context/ReservationContext";
+import { useReservations, Reservation } from "@/context/ReservationContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface ReservationFormProps {
   onClose: () => void;
   onSuccess: () => void;
+  editingReservation?: Reservation;
 }
 
-const ReservationForm = ({ onClose, onSuccess }: ReservationFormProps) => {
-  const { addReservation } = useReservations();
+const ReservationForm = ({ onClose, onSuccess, editingReservation }: ReservationFormProps) => {
+  const { addReservation, updateReservation } = useReservations();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -31,6 +32,22 @@ const ReservationForm = ({ onClose, onSuccess }: ReservationFormProps) => {
     status: "confirmed" as const,
   });
 
+  useEffect(() => {
+    if (editingReservation) {
+      setFormData({
+        customerName: editingReservation.customerName,
+        customerPhone: editingReservation.customerPhone,
+        customerEmail: editingReservation.customerEmail,
+        partySize: editingReservation.partySize,
+        date: editingReservation.date,
+        time: editingReservation.time,
+        tableNumber: editingReservation.tableNumber?.toString() || "",
+        notes: editingReservation.notes || "",
+        status: editingReservation.status,
+      });
+    }
+  }, [editingReservation]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -43,15 +60,24 @@ const ReservationForm = ({ onClose, onSuccess }: ReservationFormProps) => {
       return;
     }
 
-    addReservation({
+    const reservationData = {
       ...formData,
       tableNumber: formData.tableNumber ? parseInt(formData.tableNumber) : undefined,
-    });
+    };
 
-    toast({
-      title: "Reservation Created",
-      description: `Reservation for ${formData.customerName} has been added successfully.`,
-    });
+    if (editingReservation) {
+      updateReservation(editingReservation.id, reservationData);
+      toast({
+        title: "Reservation Updated",
+        description: `Reservation for ${formData.customerName} has been updated successfully.`,
+      });
+    } else {
+      addReservation(reservationData);
+      toast({
+        title: "Reservation Created",
+        description: `Reservation for ${formData.customerName} has been added successfully.`,
+      });
+    }
 
     onSuccess();
   };
@@ -66,7 +92,7 @@ const ReservationForm = ({ onClose, onSuccess }: ReservationFormProps) => {
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold text-gray-900">
-            New Reservation
+            {editingReservation ? "Edit Reservation" : "New Reservation"}
           </CardTitle>
           <Button
             variant="ghost"
@@ -177,17 +203,33 @@ const ReservationForm = ({ onClose, onSuccess }: ReservationFormProps) => {
                 </div>
               </div>
               
-              <div>
-                <Label htmlFor="tableNumber">Table Number (Optional)</Label>
-                <Input
-                  id="tableNumber"
-                  type="number"
-                  value={formData.tableNumber}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tableNumber: e.target.value }))}
-                  placeholder="Table number"
-                  className="mt-1"
-                  min="1"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="tableNumber">Table Number (Optional)</Label>
+                  <Input
+                    id="tableNumber"
+                    type="number"
+                    value={formData.tableNumber}
+                    onChange={(e) => setFormData(prev => ({ ...prev, tableNumber: e.target.value }))}
+                    placeholder="Table number"
+                    className="mt-1"
+                    min="1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as "confirmed" | "pending" | "cancelled" }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <div>
@@ -217,7 +259,7 @@ const ReservationForm = ({ onClose, onSuccess }: ReservationFormProps) => {
                 className="bg-orange-500 hover:bg-orange-600"
               >
                 <Save className="h-4 w-4 mr-2" />
-                Save Reservation
+                {editingReservation ? "Update Reservation" : "Save Reservation"}
               </Button>
             </div>
           </form>
