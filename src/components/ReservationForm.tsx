@@ -234,7 +234,7 @@ const ReservationForm = ({ onClose, onSuccess, editingReservation }: Reservation
                 <Label htmlFor="status">Status</Label>
                 <Select 
                   value={formData.status} 
-                  onValueChange={(value) => handleInputChange("status", value)}
+                  onValueChange={(value: "confirmed" | "pending" | "cancelled" | "completed") => handleInputChange("status", value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
