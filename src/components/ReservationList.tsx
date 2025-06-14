@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { Search, Phone, Mail, Users, Calendar, Clock, Hash, Edit, Trash2, Filter, CheckCircle, XCircle } from "lucide-react";
+import { Search, Phone, Mail, Users, Calendar, Clock, Hash, Edit, Trash2, Filter, CheckCircle, XCircle, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useReservations, Reservation } from "@/context/ReservationContext";
 import { useToast } from "@/hooks/use-toast";
 import ReservationForm from "./ReservationForm";
+
+type SortOption = "name" | "time" | "date" | "table" | "default";
 
 const ReservationList = () => {
   const { reservations, deleteReservation, markAsArrived, isReservationLate, getTodayReservations } = useReservations();
@@ -15,6 +18,7 @@ const ReservationList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("default");
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showTodayOnly, setShowTodayOnly] = useState(false);
 
@@ -29,11 +33,36 @@ const ReservationList = () => {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  const sortedReservations = filteredReservations.sort((a, b) => {
-    const dateA = new Date(`${a.date} ${a.time}`);
-    const dateB = new Date(`${b.date} ${b.time}`);
-    return dateA.getTime() - dateB.getTime();
+  const sortedReservations = [...filteredReservations].sort((a, b) => {
+    switch (sortBy) {
+      case "name":
+        return a.customerName.localeCompare(b.customerName);
+      case "time":
+        return a.time.localeCompare(b.time);
+      case "date":
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      case "table":
+        const tableA = a.tableNumber || 0;
+        const tableB = b.tableNumber || 0;
+        return tableA - tableB;
+      case "default":
+      default:
+        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateB = new Date(`${b.date} ${b.time}`);
+        return dateA.getTime() - dateB.getTime();
+    }
   });
+
+  const getSortLabel = (option: SortOption) => {
+    switch (option) {
+      case "name": return "Name";
+      case "time": return "Time";
+      case "date": return "Date";
+      case "table": return "Table Number";
+      case "default": return "Default (Date & Time)";
+      default: return "Sort by";
+    }
+  };
 
   const handleDelete = (id: string, customerName: string) => {
     if (window.confirm(`Are you sure you want to delete the reservation for ${customerName}?`)) {
@@ -86,11 +115,11 @@ const ReservationList = () => {
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center">
             <Filter className="h-5 w-5 mr-2 text-orange-500" />
-            Filter Reservations
+            Filter & Sort Reservations
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Input
                 placeholder="Search by name, phone, or email..."
@@ -118,6 +147,32 @@ const ReservationList = () => {
               onChange={(e) => setDateFilter(e.target.value)}
               placeholder="Filter by date"
             />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  {getSortLabel(sortBy)}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-full bg-white border shadow-lg">
+                <DropdownMenuItem onClick={() => setSortBy("default")}>
+                  Default (Date & Time)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("name")}>
+                  Name
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("time")}>
+                  Time
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("date")}>
+                  Date
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("table")}>
+                  Table Number
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button
               variant={showTodayOnly ? "default" : "outline"}
