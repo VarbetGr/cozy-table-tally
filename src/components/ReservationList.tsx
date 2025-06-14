@@ -20,7 +20,7 @@ const ReservationList = () => {
   const [dateFilter, setDateFilter] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("default");
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
-  const [showTodayOnly, setShowTodayOnly] = useState(false);
+  const [showTodayOnly, setShowTodayOnly] = useState(true);
 
   const filteredReservations = (showTodayOnly ? getTodayReservations() : reservations).filter(reservation => {
     const matchesSearch = reservation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
