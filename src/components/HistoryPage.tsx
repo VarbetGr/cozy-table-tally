@@ -1,183 +1,149 @@
 
 import { useState } from "react";
-import { Search, Phone, Mail, Users, Calendar, Clock, Hash, history, CheckCircle, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { History, Users, Clock, Calendar, Phone, Mail, MapPin, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { useReservations } from "@/context/ReservationContext";
 
 const HistoryPage = () => {
   const { getPastReservations } = useReservations();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-
+  
   const pastReservations = getPastReservations();
-
-  const filteredReservations = pastReservations.filter(reservation => {
-    const matchesSearch = reservation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reservation.customerPhone.includes(searchTerm) ||
-                         reservation.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || reservation.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const sortedReservations = filteredReservations.sort((a, b) => {
-    const dateA = new Date(`${a.date} ${a.time}`);
-    const dateB = new Date(`${b.date} ${b.time}`);
-    return dateB.getTime() - dateA.getTime(); // Most recent first
-  });
+  
+  const filteredReservations = pastReservations.filter(reservation =>
+    reservation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    reservation.customerPhone.includes(searchTerm) ||
+    reservation.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed": return "bg-green-100 text-green-800";
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      case "cancelled": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "confirmed": return "bg-green-500";
+      case "pending": return "bg-yellow-500";
+      case "cancelled": return "bg-red-500";
+      default: return "bg-gray-500";
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "confirmed": return "text-green-700 bg-green-50";
+      case "pending": return "text-yellow-700 bg-yellow-50";
+      case "cancelled": return "text-red-700 bg-red-50";
+      default: return "text-gray-700 bg-gray-50";
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="bg-orange-500 p-2 rounded-lg">
+            <History className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Reservation History</h2>
+            <p className="text-gray-600">Past reservations and completed bookings</p>
+          </div>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center">
-            <history className="h-5 w-5 mr-2 text-orange-500" />
-            Reservation History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <CardTitle className="flex items-center space-x-2">
+              <History className="h-5 w-5" />
+              <span>Past Reservations ({filteredReservations.length})</span>
+            </CardTitle>
+            <div className="flex items-center space-x-4">
               <Input
                 placeholder="Search by name, phone, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
+                className="w-64"
               />
             </div>
-            
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Past Reservations List */}
-      <div className="space-y-4">
-        {sortedReservations.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <history className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No past reservations</h3>
-                <p className="text-gray-500">
-                  {searchTerm || statusFilter !== "all"
-                    ? "Try adjusting your filters to see more results."
-                    : "Past reservations will appear here."}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          sortedReservations.map((reservation) => (
-            <Card key={reservation.id} className="hover:shadow-md transition-shadow opacity-75">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-3">
-                    {/* Header Row */}
-                    <div className="flex items-center justify-between">
+        </CardHeader>
+        
+        <CardContent>
+          {filteredReservations.length === 0 ? (
+            <div className="text-center py-12">
+              <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No past reservations</h3>
+              <p className="text-gray-500">
+                {searchTerm ? "No reservations match your search criteria." : "Past reservations will appear here."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredReservations.map((reservation) => (
+                <div
+                  key={reservation.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0">
+                    <div className="flex-1 space-y-2">
                       <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {reservation.customerName}
-                        </h3>
-                        {reservation.arrived ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            <CheckCircle className="h-3 w-3 mr-1" />
+                        <h3 className="font-semibold text-gray-900">{reservation.customerName}</h3>
+                        <Badge className={getStatusText(reservation.status)}>
+                          {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+                        </Badge>
+                        {reservation.arrived && (
+                          <Badge className="text-blue-700 bg-blue-50">
                             Arrived
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-gray-100 text-gray-800">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            No Show
                           </Badge>
                         )}
                       </div>
-                      <Badge className={getStatusColor(reservation.status)}>
-                        {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
-                      {reservation.customerPhone && (
-                        <div className="flex items-center">
-                          <Phone className="h-4 w-4 mr-2 text-orange-500" />
-                          {reservation.customerPhone}
+                      
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>{reservation.date}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{reservation.time}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Users className="h-4 w-4" />
+                          <span>{reservation.partySize} people</span>
+                        </div>
+                        {reservation.tableNumber && (
+                          <div className="flex items-center space-x-1">
+                            <MapPin className="h-4 w-4" />
+                            <span>Table {reservation.tableNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <Phone className="h-4 w-4" />
+                          <span>{reservation.customerPhone}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Mail className="h-4 w-4" />
+                          <span>{reservation.customerEmail}</span>
+                        </div>
+                      </div>
+                      
+                      {reservation.notes && (
+                        <div className="flex items-start space-x-1 text-sm text-gray-600">
+                          <FileText className="h-4 w-4 mt-0.5" />
+                          <span>{reservation.notes}</span>
                         </div>
                       )}
-                      {reservation.customerEmail && (
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-2 text-orange-500" />
-                          {reservation.customerEmail}
-                        </div>
-                      )}
                     </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Users className="h-4 w-4 mr-2 text-orange-500" />
-                        {reservation.partySize} people
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2 text-orange-500" />
-                        {formatDate(reservation.date)}
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="h-4 w-4 mr-2 text-orange-500" />
-                        {reservation.time}
-                      </div>
-                      {reservation.tableNumber && (
-                        <div className="flex items-center text-gray-600">
-                          <Hash className="h-4 w-4 mr-2 text-orange-500" />
-                          Table {reservation.tableNumber}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {reservation.notes && (
-                      <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        <strong>Notes:</strong> {reservation.notes}
-                      </div>
-                    )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

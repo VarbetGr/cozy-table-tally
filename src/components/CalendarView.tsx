@@ -18,7 +18,11 @@ const CalendarView = () => {
   const firstDayOfMonth = new Date(year, month, 1);
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const startDate = new Date(firstDayOfMonth);
-  startDate.setDate(startDate.getDate() - firstDayOfMonth.getDay());
+  
+  // Adjust to start from Monday (0 = Sunday, 1 = Monday, etc.)
+  const firstDayWeekday = firstDayOfMonth.getDay();
+  const mondayOffset = firstDayWeekday === 0 ? 6 : firstDayWeekday - 1;
+  startDate.setDate(startDate.getDate() - mondayOffset);
 
   const days = [];
   const currentDateIterator = new Date(startDate);
@@ -40,7 +44,6 @@ const CalendarView = () => {
   };
 
   const getReservationsForDate = (date: Date) => {
-    // Format the date as YYYY-MM-DD to match the reservation date format
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -110,8 +113,8 @@ const CalendarView = () => {
         <CardContent>
           {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-1">
-            {/* Day Headers */}
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            {/* Day Headers - Starting from Monday */}
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
               <div key={day} className="p-2 text-center font-medium text-gray-500 text-sm">
                 {day}
               </div>
