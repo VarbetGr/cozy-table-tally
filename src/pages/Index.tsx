@@ -24,7 +24,7 @@ const Index = () => {
                 <div className="bg-orange-500 p-2 rounded-lg">
                   <Users className="h-6 w-6 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900">Restaurant Reservations</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Izabela Restaurant</h1>
               </div>
               <Button 
                 onClick={() => setShowForm(true)}
