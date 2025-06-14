@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Phone, Mail, Users, Calendar, Clock, Hash, Edit, Trash2, Filter, CheckCircle, XCircle, ArrowUpDown } from "lucide-react";
+import { Search, Phone, Mail, Users, Calendar, Clock, Hash, Edit, Trash2, Filter, CheckCircle, XCircle, ArrowUpDown, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import ReservationForm from "./ReservationForm";
 type SortOption = "name" | "time" | "date" | "table" | "default";
 
 const ReservationList = () => {
-  const { reservations, deleteReservation, markAsArrived, isReservationLate, getTodayReservations } = useReservations();
+  const { reservations, deleteReservation, markAsArrived, completeReservation, isReservationLate, getTodayReservations } = useReservations();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -88,6 +88,16 @@ const ReservationList = () => {
       title: "Customer Arrived",
       description: `${customerName} has been marked as arrived.`,
     });
+  };
+
+  const handleCompleteReservation = (id: string, customerName: string) => {
+    if (window.confirm(`Are you sure you want to send ${customerName}'s reservation to history?`)) {
+      completeReservation(id);
+      toast({
+        title: "Reservation Completed",
+        description: `${customerName}'s reservation has been moved to history.`,
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -293,6 +303,17 @@ const ReservationList = () => {
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
                           Arrived
+                        </Button>
+                      )}
+                      {reservation.status === "confirmed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCompleteReservation(reservation.id, reservation.customerName)}
+                          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                        >
+                          <Archive className="h-4 w-4 mr-1" />
+                          To History
                         </Button>
                       )}
                       <div className="flex space-x-2">

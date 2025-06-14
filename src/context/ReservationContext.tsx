@@ -11,7 +11,7 @@ export interface Reservation {
   time: string;
   tableNumber?: number;
   notes?: string;
-  status: "confirmed" | "pending" | "cancelled";
+  status: "confirmed" | "pending" | "cancelled" | "completed";
   arrived: boolean;
   createdAt: string;
 }
@@ -25,6 +25,7 @@ interface ReservationContextType {
   getTodayReservations: () => Reservation[];
   getPastReservations: () => Reservation[];
   markAsArrived: (id: string) => void;
+  completeReservation: (id: string) => void;
   isReservationLate: (reservation: Reservation) => boolean;
 }
 
@@ -82,16 +83,24 @@ export const ReservationProvider = ({ children }: { children: React.ReactNode })
 
   const getTodayReservations = () => {
     const today = new Date().toISOString().split('T')[0];
-    return reservations.filter(reservation => reservation.date === today);
+    return reservations.filter(reservation => 
+      reservation.date === today && reservation.status !== "completed"
+    );
   };
 
   const getPastReservations = () => {
     const today = new Date().toISOString().split('T')[0];
-    return reservations.filter(reservation => reservation.date < today);
+    return reservations.filter(reservation => 
+      reservation.date < today || reservation.status === "completed"
+    );
   };
 
   const markAsArrived = (id: string) => {
     updateReservation(id, { arrived: true });
+  };
+
+  const completeReservation = (id: string) => {
+    updateReservation(id, { status: "completed" });
   };
 
   const isReservationLate = (reservation: Reservation) => {
@@ -122,6 +131,7 @@ export const ReservationProvider = ({ children }: { children: React.ReactNode })
         getTodayReservations,
         getPastReservations,
         markAsArrived,
+        completeReservation,
         isReservationLate,
       }}
     >

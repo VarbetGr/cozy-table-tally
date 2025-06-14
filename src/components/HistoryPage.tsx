@@ -23,6 +23,7 @@ const HistoryPage = () => {
       case "confirmed": return "bg-green-500";
       case "pending": return "bg-yellow-500";
       case "cancelled": return "bg-red-500";
+      case "completed": return "bg-purple-500";
       default: return "bg-gray-500";
     }
   };
@@ -32,6 +33,7 @@ const HistoryPage = () => {
       case "confirmed": return "text-green-700 bg-green-50";
       case "pending": return "text-yellow-700 bg-yellow-50";
       case "cancelled": return "text-red-700 bg-red-50";
+      case "completed": return "text-purple-700 bg-purple-50";
       default: return "text-gray-700 bg-gray-50";
     }
   };
