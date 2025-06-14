@@ -22,7 +22,11 @@ const ReservationList = () => {
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
   const [showTodayOnly, setShowTodayOnly] = useState(true);
 
-  const filteredReservations = (showTodayOnly ? getTodayReservations() : reservations).filter(reservation => {
+  const getActiveReservations = () => {
+    return reservations.filter(reservation => reservation.status !== "completed");
+  };
+
+  const filteredReservations = (showTodayOnly ? getTodayReservations() : getActiveReservations()).filter(reservation => {
     const matchesSearch = reservation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reservation.customerPhone.includes(searchTerm) ||
                          reservation.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
