@@ -1,11 +1,13 @@
+
 import { useState } from "react";
-import { Calendar, Plus, Users, Clock, Search } from "lucide-react";
+import { Calendar, Plus, Users, Clock, Search, history } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import ReservationForm from "@/components/ReservationForm";
 import ReservationList from "@/components/ReservationList";
 import CalendarView from "@/components/CalendarView";
+import HistoryPage from "@/components/HistoryPage";
 import { ReservationProvider } from "@/context/ReservationContext";
 
 const Index = () => {
@@ -62,6 +64,17 @@ const Index = () => {
                 <Calendar className="h-4 w-4 inline mr-2" />
                 Calendar
               </button>
+              <button
+                onClick={() => setActiveTab("history")}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === "history"
+                    ? "border-orange-500 text-orange-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <history className="h-4 w-4 inline mr-2" />
+                History
+              </button>
             </div>
           </div>
         </nav>
@@ -70,6 +83,7 @@ const Index = () => {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {activeTab === "list" && <ReservationList />}
           {activeTab === "calendar" && <CalendarView />}
+          {activeTab === "history" && <HistoryPage />}
         </main>
 
         {/* Reservation Form Modal */}

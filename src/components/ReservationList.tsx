@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Search, Phone, Mail, Users, Calendar, Clock, Hash, Edit, Trash2, Filter } from "lucide-react";
+import { Search, Phone, Mail, Users, Calendar, Clock, Hash, Edit, Trash2, Filter, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,14 +10,15 @@ import { useToast } from "@/hooks/use-toast";
 import ReservationForm from "./ReservationForm";
 
 const ReservationList = () => {
-  const { reservations, deleteReservation } = useReservations();
+  const { reservations, deleteReservation, markAsArrived, isReservationLate, getTodayReservations } = useReservations();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("");
   const [editingReservation, setEditingReservation] = useState<Reservation | null>(null);
+  const [showTodayOnly, setShowTodayOnly] = useState(false);
 
-  const filteredReservations = reservations.filter(reservation => {
+  const filteredReservations = (showTodayOnly ? getTodayReservations() : reservations).filter(reservation => {
     const matchesSearch = reservation.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reservation.customerPhone.includes(searchTerm) ||
                          reservation.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
@@ -53,6 +53,14 @@ const ReservationList = () => {
     setEditingReservation(null);
   };
 
+  const handleMarkArrived = (id: string, customerName: string) => {
+    markAsArrived(id);
+    toast({
+      title: "Customer Arrived",
+      description: `${customerName} has been marked as arrived.`,
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed": return "bg-green-100 text-green-800";
@@ -82,7 +90,7 @@ const ReservationList = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Input
                 placeholder="Search by name, phone, or email..."
@@ -110,6 +118,14 @@ const ReservationList = () => {
               onChange={(e) => setDateFilter(e.target.value)}
               placeholder="Filter by date"
             />
+
+            <Button
+              variant={showTodayOnly ? "default" : "outline"}
+              onClick={() => setShowTodayOnly(!showTodayOnly)}
+              className="w-full"
+            >
+              {showTodayOnly ? "Show All" : "Today Only"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -131,87 +147,123 @@ const ReservationList = () => {
             </CardContent>
           </Card>
         ) : (
-          sortedReservations.map((reservation) => (
-            <Card key={reservation.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-3">
-                    {/* Header Row */}
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {reservation.customerName}
-                      </h3>
-                      <Badge className={getStatusColor(reservation.status)}>
-                        {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
-                      {reservation.customerPhone && (
-                        <div className="flex items-center">
-                          <Phone className="h-4 w-4 mr-2 text-orange-500" />
-                          {reservation.customerPhone}
+          sortedReservations.map((reservation) => {
+            const isLate = isReservationLate(reservation);
+            return (
+              <Card 
+                key={reservation.id} 
+                className={`hover:shadow-md transition-shadow ${isLate ? 'border-red-500 bg-red-50' : ''}`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-3">
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {reservation.customerName}
+                          </h3>
+                          {reservation.arrived && (
+                            <Badge className="bg-green-100 text-green-800">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Arrived
+                            </Badge>
+                          )}
+                          {isLate && !reservation.arrived && (
+                            <Badge className="bg-red-100 text-red-800">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Late
+                            </Badge>
+                          )}
                         </div>
-                      )}
-                      {reservation.customerEmail && (
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-2 text-orange-500" />
-                          {reservation.customerEmail}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center text-gray-600">
-                        <Users className="h-4 w-4 mr-2 text-orange-500" />
-                        {reservation.partySize} people
+                        <Badge className={getStatusColor(reservation.status)}>
+                          {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+                        </Badge>
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2 text-orange-500" />
-                        {formatDate(reservation.date)}
+                      
+                      {/* Contact Information Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                        {reservation.customerPhone && (
+                          <div className="flex items-center">
+                            <Phone className="h-4 w-4 mr-2 text-orange-500" />
+                            {reservation.customerPhone}
+                          </div>
+                        )}
+                        {reservation.customerEmail && (
+                          <div className="flex items-center">
+                            <Mail className="h-4 w-4 mr-2 text-orange-500" />
+                            {reservation.customerEmail}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="h-4 w-4 mr-2 text-orange-500" />
-                        {reservation.time}
-                      </div>
-                      {reservation.tableNumber && (
+                      
+                      {/* Reservation Details Grid */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div className="flex items-center text-gray-600">
-                          <Hash className="h-4 w-4 mr-2 text-orange-500" />
-                          Table {reservation.tableNumber}
+                          <Users className="h-4 w-4 mr-2 text-orange-500" />
+                          {reservation.partySize} people
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <Calendar className="h-4 w-4 mr-2 text-orange-500" />
+                          {formatDate(reservation.date)}
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <Clock className="h-4 w-4 mr-2 text-orange-500" />
+                          {reservation.time}
+                        </div>
+                        {reservation.tableNumber && (
+                          <div className="flex items-center text-gray-600">
+                            <Hash className="h-4 w-4 mr-2 text-orange-500" />
+                            Table {reservation.tableNumber}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Notes Section */}
+                      {reservation.notes && (
+                        <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                          <strong>Notes:</strong> {reservation.notes}
                         </div>
                       )}
                     </div>
                     
-                    {reservation.notes && (
-                      <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        <strong>Notes:</strong> {reservation.notes}
+                    {/* Actions */}
+                    <div className="flex flex-col space-y-2 ml-4">
+                      {!reservation.arrived && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleMarkArrived(reservation.id, reservation.customerName)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Arrived
+                        </Button>
+                      )}
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(reservation)}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(reservation.id, reservation.customerName)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    )}
+                    </div>
                   </div>
-                  
-                  {/* Actions */}
-                  <div className="flex space-x-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(reservation)}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(reservation.id, reservation.customerName)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
 

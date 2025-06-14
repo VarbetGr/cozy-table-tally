@@ -12,15 +12,20 @@ export interface Reservation {
   tableNumber?: number;
   notes?: string;
   status: "confirmed" | "pending" | "cancelled";
+  arrived: boolean;
   createdAt: string;
 }
 
 interface ReservationContextType {
   reservations: Reservation[];
-  addReservation: (reservation: Omit<Reservation, "id" | "createdAt">) => void;
+  addReservation: (reservation: Omit<Reservation, "id" | "createdAt" | "arrived">) => void;
   updateReservation: (id: string, updates: Partial<Reservation>) => void;
   deleteReservation: (id: string) => void;
   getReservationsByDate: (date: string) => Reservation[];
+  getTodayReservations: () => Reservation[];
+  getPastReservations: () => Reservation[];
+  markAsArrived: (id: string) => void;
+  isReservationLate: (reservation: Reservation) => boolean;
 }
 
 const ReservationContext = createContext<ReservationContextType | undefined>(undefined);
@@ -49,10 +54,11 @@ export const ReservationProvider = ({ children }: { children: React.ReactNode })
     localStorage.setItem("restaurant-reservations", JSON.stringify(reservations));
   }, [reservations]);
 
-  const addReservation = (reservation: Omit<Reservation, "id" | "createdAt">) => {
+  const addReservation = (reservation: Omit<Reservation, "id" | "createdAt" | "arrived">) => {
     const newReservation: Reservation = {
       ...reservation,
       id: crypto.randomUUID(),
+      arrived: false,
       createdAt: new Date().toISOString(),
     };
     setReservations(prev => [...prev, newReservation]);
@@ -74,6 +80,37 @@ export const ReservationProvider = ({ children }: { children: React.ReactNode })
     return reservations.filter(reservation => reservation.date === date);
   };
 
+  const getTodayReservations = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return reservations.filter(reservation => reservation.date === today);
+  };
+
+  const getPastReservations = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return reservations.filter(reservation => reservation.date < today);
+  };
+
+  const markAsArrived = (id: string) => {
+    updateReservation(id, { arrived: true });
+  };
+
+  const isReservationLate = (reservation: Reservation) => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    // Only check if it's today and not arrived
+    if (reservation.date !== today || reservation.arrived) {
+      return false;
+    }
+
+    const [hours, minutes] = reservation.time.split(':').map(Number);
+    const reservationTime = hours * 60 + minutes;
+    
+    // Late if current time is more than 30 minutes past reservation time
+    return currentTime > reservationTime + 30;
+  };
+
   return (
     <ReservationContext.Provider
       value={{
@@ -82,6 +119,10 @@ export const ReservationProvider = ({ children }: { children: React.ReactNode })
         updateReservation,
         deleteReservation,
         getReservationsByDate,
+        getTodayReservations,
+        getPastReservations,
+        markAsArrived,
+        isReservationLate,
       }}
     >
       {children}
