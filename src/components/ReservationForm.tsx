@@ -29,7 +29,7 @@ const ReservationForm = ({ onClose, onSuccess, editingReservation }: Reservation
     time: string;
     tableNumber: string;
     notes: string;
-    status: "confirmed" | "pending" | "cancelled";
+    status: "confirmed" | "pending" | "cancelled" | "completed";
   }>({
     customerName: "",
     customerPhone: "",
@@ -243,6 +243,7 @@ const ReservationForm = ({ onClose, onSuccess, editingReservation }: Reservation
                     <SelectItem value="confirmed">Confirmed</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
